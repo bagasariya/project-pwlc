@@ -1,0 +1,14 @@
+{
+  "devCommand": null,
+  "buildCommand": null,
+  "framework": null,
+
+  "routes": [
+    { "src": "^/login$", "dest": "/login.html" },
+    { "src": "^/$", "dest": "/index.html" },
+    { "src": "^/dashboard$", "dest": "/dashboard.html" },
+    { "src": "^/karyawan$", "dest": "/karyawan.html" },
+    { "src": "^/area$", "dest": "/area.html" },
+    { "src": "^/pekerjaan$", "dest": "/pekerjaan.html" }
+  ]
+}

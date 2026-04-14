@@ -1,0 +1,10 @@
+{
+  "devCommand": null,
+  "buildCommand": null,
+  "framework": null,
+  "rewrites": [
+    { "source": "/", "destination": "/public/index.html" },
+    { "source": "/login", "destination": "/public/login.html" },
+    { "source": "/dashboard", "destination": "/public/dashboard.html" }
+  ]
+}
