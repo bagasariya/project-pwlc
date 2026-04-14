@@ -3,43 +3,101 @@
 <head>
   <title>Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
 </head>
-<body>
 
+<body>
+<!-- PROTEKSI LOGIN -->
 <script src="/js/app.js"></script>
-<script src="/js/layout.js"></script>
+<script src="/component/sidebar.js"></script>
+
 
 <div class="d-flex">
 
-  <!-- Sidebar -->
-  <div class="bg-dark text-white p-3 vh-100" style="width: 250px;" id="sidebar">
+  <!-- SIDEBAR -->
+  <div id="sidebar" style="width:250px;">
     
   </div>
 
-  <!-- Content -->
+  <!-- CONTENT -->
   <div class="flex-grow-1 p-4">
 
-    <!-- Navbar -->
-    <nav class="navbar bg-light mb-4">
-      <span class="navbar-brand">Dashboard</span>
-    </nav>
+    <h3>Dashboard</h3>
 
-    <!-- Cards -->
     <div class="row">
-      <div class="col-md-4">
-        <div class="card p-3">Total Karyawan: 25</div>
-      </div>
-      <div class="col-md-4">
-        <div class="card p-3">Total Area: 5</div>
-      </div>
-      <div class="col-md-4">
-        <div class="card p-3">Total Pekerjaan: 12</div>
-      </div>
-    </div>
 
+      <div class="col-md-4">
+        <div class="card bg-primary text-white p-3">
+          <h5>Total Karyawan</h5>
+          <h2 id="totalKaryawan">0</h2>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card bg-success text-white p-3">
+          <h5>Total Area</h5>
+          <h2 id="totalArea">0</h2>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card bg-warning text-white p-3">
+          <h5>Total Pekerjaan</h5>
+          <h2 id="totalPekerjaan">0</h2>
+        </div>
+      </div>
+
+    </div>
+    <hr>
+
+    <h5>Karyawan Terbaru</h5>
+
+    <table class="table table-bordered">
+    <thead>
+        <tr>
+        <th>Nama</th>
+        <th>Jabatan</th>
+        </tr>
+    </thead>
+    <tbody id="latestKaryawan"></tbody>
+    </table>
   </div>
 
 </div>
+
+<script>
+
+// LOAD DASHBOARD
+async function loadDashboard() {
+  const res = await fetch("/api/dashboard");
+  const data = await res.json();
+
+  document.getElementById("totalKaryawan").innerText = data.karyawan || 0;
+  document.getElementById("totalArea").innerText = data.area || 0;
+  document.getElementById("totalPekerjaan").innerText = data.pekerjaan || 0;
+
+  renderLatest(data.latestKaryawan || []);
+
+}
+// tampilkan data terbaru
+function renderLatest(data) {
+  let html = "";
+
+  data.forEach(k => {
+    html += `
+      <tr>
+        <td>${k.nama}</td>
+        <td>${k.jabatan}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("latestKaryawan").innerHTML = html;
+}
+// INIT
+loadDashboard();
+
+</script>
 
 </body>
 </html>

@@ -3,11 +3,15 @@ import supabase from "./supabase.js";
 export default async function handler(req, res) {
   try {
 
-    // GET
+    // GET (JOIN area)
     if (req.method === "GET") {
       const { data, error } = await supabase
-        .from("karyawan")
-        .select("id,nama,jabatan,area:area(nama)");
+        .from("pekerjaan")
+        .select(`
+          id,
+          nama,
+          area:area_id (nama)
+        `);
 
       if (error) throw error;
 
@@ -16,11 +20,11 @@ export default async function handler(req, res) {
 
     // POST
     if (req.method === "POST") {
-      const { nama, jabatan } = req.body;
+      const { nama, area_id } = req.body;
 
       const { error } = await supabase
-        .from("karyawan")
-        .insert([{ nama, jabatan, area_id }]);
+        .from("pekerjaan")
+        .insert([{ nama, area_id }]);
 
       if (error) throw error;
 
@@ -32,7 +36,7 @@ export default async function handler(req, res) {
       const { id } = req.body;
 
       const { error } = await supabase
-        .from("karyawan")
+        .from("pekerjaan")
         .delete()
         .eq("id", id);
 
@@ -43,16 +47,16 @@ export default async function handler(req, res) {
 
     // UPDATE
     if (req.method === "PUT") {
-    const { id, nama, jabatan, area_id } = req.body;
+      const { id, nama, area_id } = req.body;
 
-    const { error } = await supabase
-        .from("karyawan")
-        .update({ nama, jabatan, area_id })
+      const { error } = await supabase
+        .from("pekerjaan")
+        .update({ nama, area_id })
         .eq("id", id);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    return res.status(200).json({ message: "Berhasil update" });
+      return res.status(200).json({ message: "Berhasil update" });
     }
 
     res.status(405).json({ message: "Method not allowed" });
