@@ -9,6 +9,9 @@
     { "src": "^/dashboard$", "dest": "/dashboard.html" },
     { "src": "^/karyawan$", "dest": "/karyawan.html" },
     { "src": "^/area$", "dest": "/area.html" },
-    { "src": "^/pekerjaan$", "dest": "/pekerjaan.html" }
+    { "src": "^/pekerjaan$", "dest": "/pekerjaan.html" },
+    { "src": "^/penugasan$", "dest": "/penugasan.html" },
+    { "src": "^/proyek$", "dest": "/proyek.html" },
+    { "src": "^/progress$", "dest": "/progress.html" }
   ]
 }
