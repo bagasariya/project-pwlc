@@ -8,6 +8,7 @@
     { "src": "^/$", "dest": "/index.html" },
     { "src": "^/dashboard$", "dest": "/dashboard.html" },
     { "src": "^/karyawan$", "dest": "/karyawan.html" },
+    { "src": "^/karyawan2$", "dest": "/karyawan2.html" },
     { "src": "^/area$", "dest": "/area.html" },
     { "src": "^/pekerjaan$", "dest": "/pekerjaan.html" },
     { "src": "^/penugasan$", "dest": "/penugasan.html" },

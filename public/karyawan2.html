@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Karyawan</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/sidebar.css" rel="stylesheet">
+</head>
+
+<body>
+<script src="/js/app.js"></script>
+<script src="/component/sidebar.js"></script>
+
+<!-- PROTEKSI LOGIN -->
+
+<div class="d-flex">
+
+  <!-- SIDEBAR -->
+  <div style="width: 250px;" id="sidebar">
+    
+  </div>
+<div class="container mt-4">
+
+  <h3>Data Karyawan</h3>
+
+  <table class="table table-bordered">
+    <thead class="table-dark text-center">
+      <tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>Jabatan</th>
+        <th>Upah Harian</th>
+        <th colspan="2">Total Hari</th>
+        <th>Total Gaji</th>
+      </tr>
+    </thead>
+    <tbody id="tabel" class="text-center"></tbody>
+  </table>
+
+  <!-- ABSENSI -->
+  <div id="absensiSection" style="display:none;">
+    <hr>
+    <h4 id="namaKaryawan"></h4>
+    <div id="summary" class="mb-3"></div>
+    <div id="calendar" class="d-flex flex-wrap"></div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="modal">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+
+      <h5 id="tgl"></h5>
+
+      <input type="time" id="masuk" class="form-control mb-2">
+      <input type="time" id="pulang" class="form-control mb-2">
+
+      <button class="btn btn-primary" onclick="simpan()">Simpan</button>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function rupiah(angka) {
+  return "Rp " + Number(angka || 0).toLocaleString("id-ID");
+}
+let currentKaryawan = null;
+let selectedDate = "";
+let dataAbsensi = [];
+
+// ================== LOAD KARYAWAN ==================
+async function loadKaryawan() {
+  const res = await fetch("/api/karyawan");
+  const data = await res.json();
+
+  let html = "";
+
+  for (const [i, k] of data.entries()) {
+
+    const { totalHari, totalLembur } = await getTotalHari(k.id);
+
+    // contoh tarif lembur (sementara)
+    const tarifLembur = 12500;
+    const totalGaji = (totalHari * (k.upah_harian || 0)) + (totalLembur * tarifLembur);
+
+    html += `
+      <tr>
+        <td>${i+1}</td>
+        <td>
+          <a href="#" onclick="showAbsensi(${k.id}, \'${k.nama}'\)">${k.nama}</a>
+        </td>
+        <td>${k.jabatan}</td>
+        <td>${rupiah(k.upah_harian || 0)}</td>
+        <td>
+          Hari: ${totalHari}
+          <td>Lembur: ${totalLembur} jam </td>
+        </td>
+        <td>${rupiah(totalGaji || 0)}</td>
+      </tr>
+    `;
+  }
+
+  document.getElementById("tabel").innerHTML = html;
+}
+
+// ================== LOAD ABSENSI ==================
+async function loadAbsensi() {
+  const res = await fetch(`/api/absensi?karyawan_id=${currentKaryawan}`);
+  dataAbsensi = await res.json();
+}
+
+// ================== HITUNG SHIFT ==================
+function hitungHari(masuk, pulang) {
+  if (!masuk || !pulang) return 0;
+
+  let m = parseInt(masuk.split(":")[0]);
+  let p = parseInt(pulang.split(":")[0]);
+
+  if (p < m) p += 24;
+
+  if (p >= 27) return 3;   // ≥ 03 pagi
+  if (p >= 22) return 2;   // ≥ 22 malam
+
+  return 1;
+}
+// ================== HITUNG LEMBUR ==================
+function hitungLembur(masuk, pulang) {
+  if (!masuk || !pulang) return 0;
+
+  let m = parseInt(masuk.split(":")[0]);
+  let p = parseInt(pulang.split(":")[0]);
+
+  if (p < m) p += 24;
+
+  // kalau sudah sampai 03 → tidak ada lembur
+  if (p >= 27) return 0;
+
+  // antara 22 - 27 → lembur dihitung dari 22
+  if (p > 22 && p < 27) {
+    return p - 22;
+  }
+
+  // antara 16 - 22 → lembur biasa
+  if (p > 16 && p <= 22) {
+    return p - 16;
+  }
+
+  return 0;
+}
+// ================== TOTAL HARI ==================
+async function getTotalHari(karyawan_id) {
+  const res = await fetch(`/api/absensi?karyawan_id=${karyawan_id}`);
+  const data = await res.json();
+
+  let totalHari = 0;
+  let totalLembur = 0;
+
+  data.forEach(a => {
+    totalHari += hitungHari(a.jam_masuk, a.jam_pulang);
+    totalLembur += hitungLembur(a.jam_masuk, a.jam_pulang);
+  });
+
+  return { totalHari, totalLembur };
+}
+
+// ================== TAMPILKAN ABSENSI ==================
+async function showAbsensi(id, nama) {
+  currentKaryawan = id;
+
+  document.getElementById("absensiSection").style.display = "block";
+  document.getElementById("namaKaryawan").innerText = "Absensi: " + nama;
+
+  await loadAbsensi();
+  generateCalendar();
+  updateTotal();
+}
+
+// ================== GENERATE KALENDER ==================
+function generateCalendar() {
+  let html = "";
+
+  for (let i = 1; i <= 30; i++) {
+
+    const tgl = `2026-04-${String(i).padStart(2, '0')}`;
+    const abs = dataAbsensi.find(a => a.tanggal === tgl);
+
+    let isi = i;
+    let warna = "bg-light";
+
+    if (abs) {
+      const hari = hitungHari(abs.jam_masuk, abs.jam_pulang);
+      const lembur = hitungLembur(abs.jam_masuk, abs.jam_pulang);
+
+      isi = `
+        <b>${i}</b><br>
+        <small>${abs.jam_masuk} - ${abs.jam_pulang}</small><br>
+        <small>Hari: ${hari}</small>
+        ${lembur > 0 ? `<br><small>Lembur: ${lembur}j</small>` : ""}
+      `;
+      if (hari === 1) warna = "bg-success text-white";
+      if (hari === 2) warna = "bg-warning";
+      if (hari === 3) warna = "bg-danger text-white";
+    }
+
+    html += `
+      <div class="border m-1 p-2 text-center ${warna}"
+           style="width:90px; cursor:pointer; border-radius:8px"
+           onclick="openModal(${i})">
+        ${isi}
+      </div>
+    `;
+  }
+
+  document.getElementById("calendar").innerHTML = html;
+}
+
+// ================== OPEN MODAL ==================
+function openModal(day) {
+  selectedDate = `2026-04-${String(day).padStart(2, '0')}`;
+
+  document.getElementById("tgl").innerText = selectedDate;
+
+  const abs = dataAbsensi.find(a => a.tanggal === selectedDate);
+
+  if (abs) {
+    document.getElementById("masuk").value = abs.jam_masuk;
+    document.getElementById("pulang").value = abs.jam_pulang;
+  } else {
+    document.getElementById("masuk").value = "";
+    document.getElementById("pulang").value = "";
+  }
+
+  new bootstrap.Modal(document.getElementById("modal")).show();
+}
+
+// ================== SIMPAN / UPDATE ==================
+async function simpan() {
+  const jam_masuk = document.getElementById("masuk").value;
+  const jam_pulang = document.getElementById("pulang").value;
+
+  const existing = dataAbsensi.find(a => a.tanggal === selectedDate);
+
+  if (existing) {
+    // UPDATE
+    await fetch("/api/absensi", {
+      method: "PUT",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        id: existing.id,
+        jam_masuk,
+        jam_pulang
+      })
+    });
+  } else {
+    // INSERT
+    await fetch("/api/absensi", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        karyawan_id: currentKaryawan,
+        tanggal: selectedDate,
+        jam_masuk,
+        jam_pulang
+      })
+    });
+  }
+
+  await loadAbsensi();
+  generateCalendar();
+  updateTotal();
+  loadKaryawan();
+}
+
+// ================== UPDATE TOTAL ==================
+function updateTotal() {
+  let totalHari = 0;
+  let totalLembur = 0;
+
+  dataAbsensi.forEach(a => {
+    totalHari += hitungHari(a.jam_masuk, a.jam_pulang);
+    totalLembur += hitungLembur(a.jam_masuk, a.jam_pulang);
+  });
+
+  document.getElementById("summary").innerHTML = `
+    <h5>Total Hari: ${totalHari}</h5>
+    <h5>Total Lembur: ${totalLembur} jam</h5>
+  `;
+}
+
+// INIT
+loadKaryawan();
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       const { data, error } = await supabase
         .from("karyawan")
-        .select("id,nama,jabatan,area:area(nama)");
+        .select("id,nama,jabatan,upah_harian,area:area(nama)");
 
       if (error) throw error;
 
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
       const { error } = await supabase
         .from("karyawan")
-        .insert([{ nama, jabatan, area_id }]);
+        .insert([{ nama, jabatan, upah_harian, area_id }]);
 
       if (error) throw error;
 
@@ -43,11 +43,11 @@ export default async function handler(req, res) {
 
     // UPDATE
     if (req.method === "PUT") {
-    const { id, nama, jabatan, area_id } = req.body;
+    const { id, nama, jabatan, upah_harian, area_id } = req.body;
 
     const { error } = await supabase
         .from("karyawan")
-        .update({ nama, jabatan, area_id })
+        .update({ nama, jabatan, upah_harian, area_id })
         .eq("id", id);
 
     if (error) throw error;

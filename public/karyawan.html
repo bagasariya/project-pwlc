@@ -36,6 +36,7 @@
             <th>ID</th>
           <th>Nama</th>
           <th>Jabatan</th>
+          <th>Upah Harian</th>
             <th>Area</th>
           <th>Aksi</th>
         </tr>
@@ -58,6 +59,7 @@
         <!-- <input type="text" id="id" class="form-control mb-2" placeholder="ID"> -->
         <input type="text" id="nama" class="form-control mb-2" placeholder="Nama">
         <input type="text" id="jabatan" class="form-control mb-2" placeholder="Jabatan">
+        <input type="number" id="upah" class="form-control mb-2" placeholder="Upah Harian">
         <select id="area" class="form-control">
         <option value="">Pilih Area</option>
         </select>
@@ -79,6 +81,7 @@
         <input type="hidden" id="editId">
         <input type="text" id="editNama" class="form-control mb-2">
         <input type="text" id="editJabatan" class="form-control">
+        <input type="number" id="editUpah" class="form-control">
         <select id="editArea" class="form-control mt-2"></select>
       </div>
       <div class="modal-footer">
@@ -103,10 +106,11 @@ async function loadData() {
         <td>${k.id}</td>
         <td>${k.nama}</td>
         <td>${k.jabatan}</td>
+        <td>${rupiah(k.upah_harian)}</td>
         <td>${k.area?.nama || '-'}</td>
 
         <td>
-            <button class="btn btn-warning btn-sm" onclick="openEdit(${k.id}, '${k.nama}', '${k.jabatan}', ${k.area_id})">Edit</button>
+            <button class="btn btn-warning btn-sm" onclick="openEdit(${k.id}, '${k.nama}', '${k.jabatan}', ${k.upah_harian}, ${k.area_id})">Edit</button>
             <button class="btn btn-danger btn-sm" onclick="hapus(${k.id})">Hapus</button>
         </td>
       </tr>
@@ -120,19 +124,22 @@ async function loadData() {
 async function tambahKaryawan() {
   const nama = document.getElementById("nama").value;
   const jabatan = document.getElementById("jabatan").value;
-    const area_id = document.getElementById("area").value;
+  const upah_harian = document.getElementById("upah").value;
+  const area_id = document.getElementById("area").value;
   
     await fetch("/api/karyawan", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ nama, jabatan, area_id })
+    body: JSON.stringify({ nama, jabatan, upah_harian, area_id })
   });
 
   // reset input
   document.getElementById("nama").value = "";
   document.getElementById("jabatan").value = "";
+  document.getElementById("upah").value = "";
+  document.getElementById("area").value = "";
 
   loadData();
 }
@@ -154,13 +161,14 @@ async function updateKaryawan() {
   const id = document.getElementById("editId").value;
   const nama = document.getElementById("editNama").value;
   const jabatan = document.getElementById("editJabatan").value;
+  const upah_harian = document.getElementById("editUpah").value;
     const area_id = document.getElementById("editArea").value;
   await fetch("/api/karyawan", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ id, nama, jabatan, area_id })
+    body: JSON.stringify({ id, nama, jabatan, upah_harian, area_id })
   });
 
   loadData();
@@ -171,10 +179,11 @@ async function updateKaryawan() {
   modal.hide();
 }
 
-function openEdit(id, nama, jabatan, area_id) {
+function openEdit(id, nama, jabatan, upah_harian, area_id) {
   document.getElementById("editId").value = id;
   document.getElementById("editNama").value = nama;
   document.getElementById("editJabatan").value = jabatan;
+  document.getElementById("editUpah").value = upah_harian;
  document.getElementById("editArea").value = area_id;
   const modal = new bootstrap.Modal(document.getElementById("modalEdit"));
   modal.show();
@@ -192,6 +201,9 @@ async function loadArea() {
 
   document.getElementById("area").innerHTML = html;
   document.getElementById("editArea").innerHTML = html;
+}
+function rupiah(angka) {
+  return "Rp " + Number(angka || 0).toLocaleString("id-ID");
 }
 // 🚀 LOAD AWAL
 loadData();
